@@ -132,6 +132,7 @@ class InstructionChecker {
       CheckNoWritesToCageBaseRegister(pc, instr);
       CheckNoWritesToRootRegister(pc, instr);
     }
+    CheckNoSystemRegisterWrites(pc, instr);
   }
 
  private:
@@ -334,6 +335,17 @@ class InstructionChecker {
             std::format("Instruction accesses root register at operand {0}",
                         i));
       }
+    }
+  }
+
+  // Verifies that system register instruction MSR is never used. This prevents
+  // unintended modification of CPU control flags or floating-point execution
+  // state.
+  void CheckNoSystemRegisterWrites(const uint8_t* pc, const Da64Inst& instr) {
+    if (instr.mnem == DA64I_MSR) {
+      violations_reporter_.ReportViolationWithInstruction(
+          pc, Da64InstFormatter::Format(instr),
+          std::format("Instruction writes to prohibited system registers"));
     }
   }
 
